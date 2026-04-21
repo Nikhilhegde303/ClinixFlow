@@ -1,0 +1,13 @@
+# Dependencies
+node_modules/
+
+# Environment Variables (CRITICAL)
+.env
+
+# Prisma
+/prisma/migrations/migration_lock.toml
+
+# Build output
+dist/
+
+/generated/prisma

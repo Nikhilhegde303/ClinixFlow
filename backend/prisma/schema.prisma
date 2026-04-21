@@ -1,0 +1,188 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+
+
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+
+// ==========================================
+// 1. CORE IDENTITY & SAAS TABLES
+// ==========================================
+
+model Hospital {
+  id           String   @id @default(uuid())
+  name         String
+  slug         String   @unique
+  address      String?
+  contact_no   String?
+  created_at   DateTime @default(now())
+
+  // Relations
+  users        User[]
+  doctors      Doctor[]
+  patients     Patient[]
+  appointments Appointment[]
+}
+
+enum Role {
+  SUPER_ADMIN
+  ADMIN
+  DOCTOR
+  RECEPTIONIST
+  PATIENT
+}
+
+model User {
+  id          String    @id @default(uuid())
+  hospital_id String?   // Nullable for Super Admin
+  email       String    @unique
+  password    String
+  role        Role
+  created_at  DateTime  @default(now())
+  
+  // OTP Fields for later implementation
+  otp_hash    String?
+  otp_expiry  DateTime?
+  is_verified Boolean   @default(false)
+
+  // Relations
+  hospital    Hospital? @relation(fields: [hospital_id], references: [id])
+  doctor      Doctor?   // A user can be a doctor
+}
+
+model Doctor {
+  id                           String   @id @default(uuid())
+  user_id                      String   @unique
+  hospital_id                  String
+  specialty                    String?
+  room_number                  String?
+  global_avg_consultation_time Int      @default(15) // in minutes
+
+  // Relations
+  user            User            @relation(fields: [user_id], references: [id])
+  hospital        Hospital        @relation(fields: [hospital_id], references: [id])
+  queue_state     QueueState?
+  appointments    Appointment[]
+  medical_records MedicalRecord[]
+}
+
+// ==========================================
+// 2. PATIENT & CLINICAL TABLES
+// ==========================================
+
+model Patient {
+  id          String   @id @default(uuid())
+  hospital_id String
+  mr_number   String   @unique // 6-digit unique medical record number
+  name        String
+  phone       String
+  dob         DateTime?
+  gender      String?
+  blood_group String?
+  created_at  DateTime @default(now())
+
+  // Relations
+  hospital        Hospital        @relation(fields: [hospital_id], references: [id])
+  appointments    Appointment[]
+  medical_records MedicalRecord[]
+
+  @@index([mr_number]) // Crucial for O(1) lookups
+}
+
+model MedicalRecord {
+  id             String   @id @default(uuid())
+  patient_id     String
+  doctor_id      String
+  appointment_id String   @unique
+  diagnosis      String?
+  prescription   Json?    // JSONB in Postgres for structured data
+  notes          String?
+  created_at     DateTime @default(now())
+
+  // Relations
+  patient     Patient     @relation(fields: [patient_id], references: [id])
+  doctor      Doctor      @relation(fields: [doctor_id], references: [id])
+  appointment Appointment @relation(fields: [appointment_id], references: [id])
+}
+
+// ==========================================
+// 3. QUEUE ENGINE TABLES
+// ==========================================
+
+model QueueState {
+  doctor_id             String  @id
+  current_token_calling Int     @default(0)
+  last_token_issued     Int     @default(0)
+  active_ema_time       Float   @default(15.0) // Alpha 0.3 average pace
+  is_emergency_active   Boolean @default(false)
+  triage_penalty        Int     @default(0)
+
+  // Relations
+  doctor Doctor @relation(fields: [doctor_id], references: [id])
+}
+
+enum AppointmentStatus {
+  WAITING
+  IN_CONSULTATION
+  COMPLETED
+  CANCELLED
+}
+
+enum AppointmentType {
+  WALK_IN
+  APPOINTMENT
+  REMOTE
+}
+
+enum AIProcessingStatus {
+  PENDING
+  COMPLETED
+  FAILED
+}
+
+model Appointment {
+  id               String            @id @default(uuid())
+  hospital_id      String
+  doctor_id        String
+  patient_id       String
+  token_number     Int
+  status           AppointmentStatus @default(WAITING)
+  priority_level   Int               @default(0) // 0: Normal, 1: Emergency
+  type             AppointmentType   @default(WALK_IN)
+  
+  // Timing
+  scheduled_time   DateTime?
+  joined_at        DateTime          @default(now())
+  check_in_time    DateTime?
+  check_out_time   DateTime?
+  session_duration Int?              // Filtered duration (with 2x Average outlier cap)
+
+  // AI Summarizer Fields
+  symptoms_raw         String?
+  symptoms_summary     String?
+  ai_risk_flag         Boolean             @default(false)
+  ai_processing_status AIProcessingStatus?
+
+  // Relations
+  hospital       Hospital       @relation(fields: [hospital_id], references: [id])
+  doctor         Doctor         @relation(fields: [doctor_id], references: [id])
+  patient        Patient        @relation(fields: [patient_id], references: [id])
+  medical_record MedicalRecord?
+
+  @@unique([doctor_id, token_number, joined_at]) // Prevents token collision for a doctor on a specific day
+  @@index([doctor_id, status]) // Fast lookup for the doctor's active dashboard
+}
