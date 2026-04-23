@@ -177,6 +177,8 @@ model Appointment {
   ai_risk_flag         Boolean             @default(false)
   ai_processing_status AIProcessingStatus?
 
+  idempotency_key String?  @unique
+
   // Relations
   hospital       Hospital       @relation(fields: [hospital_id], references: [id])
   doctor         Doctor         @relation(fields: [doctor_id], references: [id])

@@ -25,9 +25,9 @@ app.get('/health', (req, res) => {
     });
 });
 
-// 3. API Routes (We will mount our controllers here next)
+// 3. API Routes 
 app.use('/api/v1/auth', authRoutes);
-app.use('/api/v1/queue', queueRoutes);
+app.use('/api/v1', queueRoutes);
 app.use('/api/v1/hospitals', hospitalRoutes);
 app.use('/api/v1/clinical', clinicalRoutes);
 
@@ -39,7 +39,7 @@ app.use((err, req, res, next) => {
         success: false,
         error: {
             message: err.message || 'Internal Server Error',
-            // Only show the detailed stack trace if we are in development mode
+            // Only show the detailed stack trace if we are in development mode. In production mode, show only the error message. Not the stack trace.
             ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
         }
     });

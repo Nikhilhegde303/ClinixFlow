@@ -1,41 +1,69 @@
 import express from 'express';
-import { startQueue, joinQueue, callNextPatient, checkoutPatient, insertEmergency } from '../controllers/queueController.js';
+import { 
+    startQueue, 
+    joinQueue, 
+    callNextPatient, 
+    checkoutPatient, 
+    insertEmergency 
+} from '../controllers/queueController.js';
 import { verifyToken, authorizeRoles } from '../middleware/authMiddleware.js';
+import { queueJoinLimiter } from '../middleware/rateLimiter.js'; // Imported rate limiter
 
 const router = express.Router();
 
-// Only the Doctor can initialize/reset their own queue
+/**
+ * @route   POST /api/v1/doctors/:doctorId/queue/start
+ * @desc    Initialize/reset the queue for the day
+ */
 router.post(
-    '/start',
+    '/doctors/:doctorId/queue/start',
     verifyToken,
     authorizeRoles('DOCTOR'),
     startQueue
 );
 
-// Receptionists can manually add patients, or Patients can join digitally
+/**
+ * @route   POST /api/v1/doctors/:doctorId/queue/join
+ * @desc    Patient or Receptionist adds a patient to the queue
+ * @security Rate-limited to prevent bot spam or double-clicking
+ */
 router.post(
-    '/join',
+    '/doctors/:doctorId/queue/join',
     verifyToken,
     authorizeRoles('RECEPTIONIST', 'PATIENT'),
+    queueJoinLimiter, // The defense layer is applied here
     joinQueue
 );
 
+/**
+ * @route   PATCH /api/v1/doctors/:doctorId/queue/call-next
+ * @desc    Doctor triggers the next patient in line
+ */
 router.patch(
-    '/call-next',
+    '/doctors/:doctorId/queue/call-next',
     verifyToken,
     authorizeRoles('DOCTOR'),
     callNextPatient
 );
 
+/**
+ * @route   PATCH /api/v1/appointments/:appointmentId/checkout
+ * @desc    Completes the session and triggers the EMA math broadcast
+ * @note    REST best practice: This acts on a specific 'appointment' resource
+ */
 router.patch(
-    '/checkout/:appointmentId',
+    '/appointments/:appointmentId/checkout',
     verifyToken,
     authorizeRoles('DOCTOR'),
     checkoutPatient
 );
 
+/**
+ * @route   POST /api/v1/doctors/:doctorId/queue/emergency
+ * @desc    Preemption logic for Triage insertions
+ */
 router.post(
-    '/emergency',
+    '/doctors/:doctorId/queue/emergency',
     verifyToken,
     authorizeRoles('RECEPTIONIST', 'DOCTOR'),
     insertEmergency

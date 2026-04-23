@@ -48,17 +48,39 @@ export const startQueue = async (req, res, next) => {
 };
 
 /**
- * @desc    Add a patient to the queue with atomic Row-Level Locking and AI Summarization
- * @route   POST /api/v1/queue/join
+ * @desc    Add a patient to the queue with atomic Row-Level Locking and Idempotency
+ * @route   POST /api/v1/doctors/:doctorId/queue/join
  * @access  Private (RECEPTIONIST or PATIENT)
  */
 export const joinQueue = async (req, res, next) => {
     try {
-        const { doctorId, patientId, appointmentType, symptoms_raw } = req.body;
+        // Note: doctorId now comes from req.params because of our REST refactor
+        const { doctorId } = req.params; 
+        const { patientId, appointmentType, symptoms_raw } = req.body;
         const hospitalId = req.user.hospital_id;
+        
+        // Extract the Idempotency Key from the custom header
+        const idempotencyKey = req.header('Idempotency-Key');
 
         if (!doctorId || !patientId) {
             return res.status(400).json({ success: false, message: 'Doctor ID and Patient ID are required.' });
+        }
+
+        // --- THE IDEMPOTENCY GUARD ---
+        if (idempotencyKey) {
+            const existingAppointment = await prisma.appointment.findUnique({
+                where: { idempotency_key: idempotencyKey }
+            });
+
+            if (existingAppointment) {
+                console.log(`🛡️ [Network Defense] Caught duplicate request. Returning existing token #${existingAppointment.token_number}`);
+                // Note: We return 200 OK, not 201 Created, because it already existed.
+                return res.status(200).json({
+                    success: true,
+                    message: 'Recovered existing queue entry.',
+                    data: existingAppointment
+                });
+            }
         }
 
         // 1. ATOMIC TRANSACTION: The ACID Guard [cite: 210]
@@ -88,8 +110,9 @@ export const joinQueue = async (req, res, next) => {
                     type: appointmentType || 'WALK_IN',
                     status: 'WAITING',
                     priority_level: 0,
-                    symptoms_raw: symptoms_raw || null, // Store original patient input 
-                    ai_processing_status: symptoms_raw ? 'PENDING' : null 
+                    symptoms_raw: symptoms_raw || null,
+                    ai_processing_status: symptoms_raw ? 'PENDING' : null,
+                    idempotency_key: idempotencyKey || null // Store the key!
                 }
             });
 
@@ -103,30 +126,27 @@ export const joinQueue = async (req, res, next) => {
         });
 
         // 4. BACKGROUND AI PROCESSING (Non-blocking) [cite: 191]
-        // We trigger this outside the transaction so we don't hold the DB lock 
-        // while waiting for the Groq API.
-// Remove the [cite: 401] tag. It should look like this:
-if (symptoms_raw) {
-    summarizeSymptoms(symptoms_raw)
-        .then(async (aiResult) => {
-            await prisma.appointment.update({
-                where: { id: result.id },
-                data: {
-                    symptoms_summary: aiResult.summary,
-                    ai_risk_flag: aiResult.ai_risk_flag,
-                    ai_processing_status: 'COMPLETED' 
-                }
-            });
-            console.log(`✅ [AI] Symptoms processed for Token #${result.token_number}`);
-        })
-        .catch(async (err) => {
-            console.error(`❌ [AI] Processing failed: ${err.message}`);
-            await prisma.appointment.update({
-                where: { id: result.id },
-                data: { ai_processing_status: 'FAILED' }
-            });
-        });
-}
+        if (symptoms_raw) {
+            summarizeSymptoms(symptoms_raw)
+                .then(async (aiResult) => {
+                    await prisma.appointment.update({
+                        where: { id: result.id },
+                        data: {
+                            symptoms_summary: aiResult.summary,
+                            ai_risk_flag: aiResult.ai_risk_flag,
+                            ai_processing_status: 'COMPLETED' 
+                        }
+                    });
+                    console.log(`✅ [AI] Symptoms processed for Token #${result.token_number}`);
+                })
+                .catch(async (err) => {
+                    console.error(`❌ [AI] Processing failed: ${err.message}`);
+                    await prisma.appointment.update({
+                        where: { id: result.id },
+                        data: { ai_processing_status: 'FAILED' }
+                    });
+                });
+        }
 
         // Return the ticket to the user immediately
         res.status(201).json({
@@ -277,7 +297,8 @@ export const checkoutPatient = async (req, res, next) => {
  */
 export const insertEmergency = async (req, res, next) => {
     try {
-        const { doctorId, patientId } = req.body;
+        const { doctorId } = req.params; 
+        const { patientId } = req.body;  
         const hospitalId = req.user.hospital_id;
 
         if (!doctorId || !patientId) {
