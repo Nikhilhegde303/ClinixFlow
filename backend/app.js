@@ -4,6 +4,10 @@ import authRoutes from './src/routes/authRoutes.js';
 import queueRoutes from './src/routes/queueRoutes.js';
 import hospitalRoutes from './src/routes/hospitalRoutes.js';
 import clinicalRoutes from './src/routes/clinicalRoutes.js';
+import leadRoutes from './src/routes/leadRoutes.js';
+import patientRoutes from './src/routes/patientRoutes.js';
+import recordRoutes from './src/routes/recordRoutes.js';
+import adminRoutes from './src/routes/adminRoutes.js';
 
 const app = express();
 
@@ -30,6 +34,10 @@ app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1', queueRoutes);
 app.use('/api/v1/hospitals', hospitalRoutes);
 app.use('/api/v1/clinical', clinicalRoutes);
+app.use('/api/v1/leads', leadRoutes);
+app.use('/api/v1/patients', patientRoutes);
+app.use('/api/v1', recordRoutes);
+app.use('/api/v1/admin', adminRoutes);
 
 // 4. Global Error Handler (Prevents stack trace leaks in production)
 app.use((err, req, res, next) => {

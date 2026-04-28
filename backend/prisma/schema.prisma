@@ -49,6 +49,7 @@ enum Role {
 model User {
   id          String    @id @default(uuid())
   hospital_id String?   // Nullable for Super Admin
+  name        String?
   email       String    @unique
   password    String
   role        Role
@@ -145,6 +146,7 @@ enum AppointmentStatus {
 enum AppointmentType {
   WALK_IN
   APPOINTMENT
+  FOLLOW_UP
   REMOTE
 }
 
@@ -187,4 +189,27 @@ model Appointment {
 
   @@unique([doctor_id, token_number, joined_at]) // Prevents token collision for a doctor on a specific day
   @@index([doctor_id, status]) // Fast lookup for the doctor's active dashboard
+}
+
+
+// ===
+// 4. SALES & ONBOARDING TABLES
+// ===
+
+enum LeadStatus {
+  PENDING
+  CONTACTED
+  CONVERTED
+  REJECTED
+}
+
+model HospitalLead {
+  id             String     @id @default(uuid())
+  clinic_name    String
+  contact_person String
+  phone_number   String
+  status         LeadStatus @default(PENDING)
+  
+  created_at     DateTime   @default(now())
+  updated_at     DateTime   @updatedAt // Automatically tracks when you change the status
 }

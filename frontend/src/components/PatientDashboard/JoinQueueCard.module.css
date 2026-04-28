@@ -1,0 +1,235 @@
+.card {
+    background: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+    border: 1px solid #f1f5f9;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.cardHeader {
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid #f8fafc;
+}
+
+.badgeRemote {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background-color: #f5f3ff;
+    color: #6d28d9;
+    padding: 0.4rem 0.8rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.dot {
+    width: 6px;
+    height: 6px;
+    background-color: #8b5cf6;
+    border-radius: 50%;
+}
+
+.cardBody {
+    padding: 1.5rem;
+}
+
+h3 {
+    color: #0f172a;
+    margin: 0 0 0.5rem 0;
+    font-size: 1.25rem;
+}
+
+.description {
+    color: #64748b;
+    font-size: 0.95rem;
+    line-height: 1.5;
+    margin-bottom: 1.5rem;
+}
+
+/* Pre-join Insights */
+.statsContainer {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.statBox {
+    background-color: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.statBox span {
+    font-size: 0.8rem;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.statBox strong {
+    font-size: 1.25rem;
+    color: #0f172a;
+}
+
+/* Buttons */
+.primaryBtn, .confirmBtn {
+    width: 100%;
+    border: none;
+    padding: 0.875rem;
+    border-radius: 12px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.1s ease, box-shadow 0.2s ease;
+    color: white;
+}
+
+.primaryBtn {
+    background: linear-gradient(135deg, #a855f7 0%, #7c3aed 100%);
+    box-shadow: 0 4px 14px 0 rgba(124, 58, 237, 0.25);
+}
+
+.primaryBtn:hover {
+    box-shadow: 0 6px 20px rgba(124, 58, 237, 0.35);
+}
+
+.primaryBtn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+/* Confirmation View */
+.confirmView {
+    text-align: center;
+    animation: fadeIn 0.3s ease;
+}
+
+.warningIcon {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+}
+
+.buttonGroup {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1.5rem;
+}
+
+.cancelBtn {
+    flex: 1;
+    background: #f1f5f9;
+    color: #475569;
+    border: none;
+    border-radius: 12px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.cancelBtn:hover {
+    background: #e2e8f0;
+}
+
+.confirmBtn {
+    flex: 1.5;
+    background: #0f172a;
+}
+
+.confirmBtn:hover {
+    background: #1e293b;
+}
+
+.errorBanner {
+    background: #fef2f2;
+    color: #ef4444;
+    padding: 0.75rem;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+}
+
+/* Processing Spinner */
+.processingView {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    color: #64748b;
+    padding: 2rem 0;
+}
+
+.spinner {
+    width: 30px;
+    height: 30px;
+    border: 3px solid #f3f3f3;
+    border-top: 3px solid #a855f7;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+/* --- New Symptom Intake Styles --- */
+.wizardStep {
+    animation: fadeIn 0.3s ease;
+    text-align: left;
+}
+
+.wizardStep h3 {
+    color: #0f172a;
+    margin: 0 0 0.5rem 0;
+    font-size: 1.25rem;
+}
+
+.symptomInput {
+    width: 100%;
+    padding: 1rem;
+    border: 1px solid #cbd5e1;
+    border-radius: 12px;
+    font-family: inherit;
+    font-size: 0.95rem;
+    color: #0f172a;
+    background-color: #f8fafc;
+    resize: vertical;
+    min-height: 100px;
+    transition: all 0.2s ease;
+    margin-bottom: 0.5rem;
+}
+
+.symptomInput:focus {
+    outline: none;
+    border-color: #a855f7;
+    background-color: #ffffff;
+    box-shadow: 0 0 0 4px rgba(168, 85, 247, 0.1);
+}
+
+.symptomInput::placeholder {
+    color: #94a3b8;
+}
+
+.aiBadge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(to right, #faf5ff, #f3e8ff);
+    color: #7e22ce;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    border: 1px solid #e9d5ff;
+    margin-bottom: 1.5rem;
+    width: 100%;
+}
+
+/* Update Confirmation text-align */
+.warningIcon {
+    text-align: center;
+}

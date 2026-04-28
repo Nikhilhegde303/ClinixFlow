@@ -1,0 +1,88 @@
+.dashboardContainer {
+    background-color: #f8fafc;
+    min-height: 100vh;
+    padding: 2rem;
+    font-family: 'Inter', sans-serif;
+    color: #0f172a;
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    max-width: 1200px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.header h1 { margin: 0 0 0.5rem 0; font-weight: 800; font-size: 2rem;}
+.subtitle { margin: 0; color: #64748b; font-size: 1rem; }
+
+.addBtn {
+    background: #0f172a;
+    color: white;
+    padding: 0.875rem 1.5rem;
+    border-radius: 0.75rem;
+    font-weight: 700;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.addBtn:hover { background: #334155; transform: translateY(-2px); }
+
+/* Stats Grid */
+.statsGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    max-width: 1200px;
+    margin: 0 auto 2.5rem auto;
+}
+
+.statCard {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 1rem;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+}
+
+.statCard h3 { margin: 0 0 0.5rem 0; color: #64748b; font-size: 0.9rem; text-transform: uppercase; }
+.statNumber { font-size: 2.5rem; font-weight: 800; color: #0f172a; }
+
+/* Table Section */
+.directorySection {
+    background: white;
+    padding: 2rem;
+    border-radius: 1.5rem;
+    border: 1px solid #e2e8f0;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.sectionTitle { margin-top: 0; margin-bottom: 1.5rem; font-weight: 800;}
+
+.tableWrapper { overflow-x: auto; }
+.staffTable { width: 100%; border-collapse: collapse; text-align: left; }
+.staffTable th { padding: 1rem; border-bottom: 2px solid #e2e8f0; color: #64748b; font-weight: 600; font-size: 0.9rem; }
+.staffTable td { padding: 1rem; border-bottom: 1px solid #f1f5f9; color: #334155; }
+.fwBold { font-weight: 700; color: #0f172a !important; }
+
+.roleBadge { padding: 0.35rem 0.75rem; border-radius: 9999px; font-size: 0.8rem; font-weight: 700; }
+.roleDoc { background: #eff6ff; color: #3b82f6; }
+.roleRec { background: #fdf4ff; color: #d946ef; }
+
+/* Modal */
+.modalOverlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(15,23,42,0.5); display: flex; justify-content: center; align-items: center; z-index: 100; backdrop-filter: blur(4px);}
+.modalContent { background: white; padding: 2.5rem; border-radius: 1.5rem; width: 100%; max-width: 600px; }
+.modalContent h2 { margin-top: 0; margin-bottom: 1.5rem; }
+
+.formRow { display: flex; gap: 1rem; margin-bottom: 1rem; }
+.formGroup { flex: 1; display: flex; flex-direction: column; }
+.formGroup label { font-size: 0.85rem; font-weight: 600; margin-bottom: 0.5rem; color: #475569;}
+.formGroup input, .formGroup select { padding: 0.75rem; border: 1px solid #cbd5e1; border-radius: 0.5rem; font-family: inherit; }
+
+.modalActions { display: flex; justify-content: flex-end; gap: 1rem; margin-top: 2rem; }
+.cancelBtn { background: none; border: 1px solid #cbd5e1; padding: 0.75rem 1.5rem; border-radius: 0.5rem; cursor: pointer; }
+.submitBtn { background: #0f172a; color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 0.5rem; font-weight: 600; cursor: pointer; }

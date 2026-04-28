@@ -1,0 +1,170 @@
+/* --- GLOBAL DASHBOARD & HEADER --- */
+.dashboardContainer {
+    background-color: #f8fafc;
+    min-height: 100vh;
+    padding: 2rem;
+    font-family: 'Inter', sans-serif;
+    color: #475569;
+}
+
+.dashboardHeader {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1.5rem;
+    margin-bottom: 2.5rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid #cbd5e1;
+    max-width: 1200px;
+    margin: 0 auto 2.5rem auto;
+}
+
+@media (min-width: 768px) {
+    .dashboardHeader {
+        flex-direction: row;
+        align-items: center;
+    }
+}
+
+.dashboardHeader h1 {
+    margin: 0 0 0.5rem 0;
+    color: #0f172a;
+    font-size: 2.25rem;
+    font-weight: 800;
+    letter-spacing: -0.025em;
+}
+
+.subtitle { margin: 0; color: #94a3b8; font-size: 1.1rem; }
+
+/* Doctor Selector Pill */
+.doctorSelector {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    background: white;
+    padding: 0.75rem 1.5rem;
+    border-radius: 9999px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.02);
+    border: 1px solid #cbd5e1;
+}
+
+.doctorSelector label { font-weight: 600; color: #0f172a; font-size: 0.95rem; }
+.doctorSelector select {
+    padding: 0.5rem 1rem;
+    border-radius: 9999px;
+    border: 1px solid transparent;
+    font-size: 1rem;
+    color: #d946ef; 
+    background-color: #f8fafc;
+    font-weight: 700;
+    cursor: pointer;
+    outline: none;
+}
+.doctorSelector select:focus {
+    border-color: #d946ef;
+    box-shadow: 0 0 0 3px rgba(217, 70, 239, 0.15);
+}
+
+/* --- THE BENTO GRID --- */
+.gridContainer {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+@media (min-width: 1024px) {
+    .gridContainer { grid-template-columns: 1fr 1fr; align-items: start; }
+}
+
+.card {
+    background: white;
+    border-radius: 1.5rem;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    padding: 2.5rem;
+    width: 100%;
+    box-sizing: border-box;
+    transition: all 0.4s ease;
+}
+
+/* The Lock State for the Right Column */
+.dimmedCard {
+    opacity: 0.65;
+    filter: grayscale(80%);
+}
+
+.title {
+    margin-top: 0;
+    margin-bottom: 2rem;
+    color: #0f172a;
+    font-size: 1.5rem;
+    font-weight: 800;
+}
+
+/* --- COLUMN 1: IDENTITY --- */
+.searchSection { display: flex; flex-direction: column; gap: 1.5rem; }
+.formGroup { display: flex; flex-direction: column; margin-bottom: 1.25rem; }
+.formGroup label { font-size: 0.9rem; font-weight: 600; color: #475569; margin-bottom: 0.5rem; }
+.formGroup input {
+    padding: 0.875rem 1rem;
+    border-radius: 0.75rem;
+    border: 1px solid #cbd5e1;
+    font-size: 1rem;
+    background-color: #f8fafc;
+}
+.formGroup input:focus { outline: none; border-color: #d946ef; background-color: white; box-shadow: 0 0 0 3px rgba(217, 70, 239, 0.15); }
+
+.submitBtn {
+    width: 100%; padding: 1rem;
+    background: linear-gradient(to right, #f472b6, #d946ef);
+    color: white; border: none; border-radius: 9999px;
+    font-weight: 700; font-size: 1.05rem; cursor: pointer;
+    box-shadow: 0 6px 20px rgba(217, 70, 239, 0.2); transition: all 0.2s;
+}
+.submitBtn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(217, 70, 239, 0.4); }
+
+.divider { text-align: center; position: relative; margin: 1rem 0; z-index: 1;}
+.divider::before { content: ""; position: absolute; top: 50%; left: 0; right: 0; border-top: 1px solid #e2e8f0; z-index: -1; }
+.divider span { background: white; padding: 0 1rem; color: #94a3b8; font-size: 0.85rem; font-weight: 600; }
+
+.secondaryBtn {
+    width: 100%; padding: 1rem; background: white; color: #d946ef;
+    border: 2px dashed #cbd5e1; border-radius: 1rem; font-weight: 700;
+    cursor: pointer; transition: all 0.2s ease;
+}
+.secondaryBtn:hover { border-color: #d946ef; background: #faf5ff; }
+
+/* Locked Patient View */
+.activePatientCard {
+    background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 1rem;
+    padding: 1.5rem; border-left: 6px solid #10b981;
+}
+.statusBadge {
+    display: inline-block; background: #ecfdf5; color: #10b981;
+    padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.75rem;
+    font-weight: 800; margin-bottom: 1rem; border: 1px solid #6ee7b7;
+}
+.patientInfo h3 { margin: 0 0 0.5rem 0; color: #0f172a; font-size: 1.5rem; font-weight: 800; }
+.patientInfo p { margin: 0 0 0.25rem 0; color: #475569; font-size: 0.95rem; }
+.demographicsRow { display: flex; gap: 0.5rem; margin-top: 1rem; }
+.demographicsRow span { background: #e2e8f0; color: #334155; padding: 0.35rem 0.75rem; border-radius: 0.5rem; font-size: 0.85rem; font-weight: 600; }
+.clearBtn { margin-top: 1.5rem; background: none; border: none; color: #64748b; font-size: 0.9rem; font-weight: 600; cursor: pointer; text-decoration: underline; padding: 0; }
+
+/* --- REGISTRATION MODAL --- */
+.modalOverlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(15, 23, 42, 0.4); backdrop-filter: blur(4px); display: flex; justify-content: center; align-items: center; z-index: 1000; padding: 1rem; }
+.modalContent { background: white; border-radius: 1.5rem; padding: 2.5rem; width: 100%; max-width: 600px; box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15); }
+.modalContent h2 { margin-top: 0; margin-bottom: 2rem; color: #0f172a; }
+.formRow { display: flex; gap: 1.5rem; flex-direction: column; }
+@media (min-width: 600px) { .formRow { flex-direction: row; } .formRow > .formGroup { flex: 1; } }
+.modalContent select { padding: 0.875rem 1rem; border-radius: 0.75rem; border: 1px solid #cbd5e1; background-color: #f8fafc; font-size: 1rem; }
+.modalActions { display: flex; justify-content: flex-end; gap: 1rem; margin-top: 2.5rem; }
+.cancelBtn { padding: 0.75rem 1.5rem; background: transparent; color: #64748b; border: 1px solid #cbd5e1; border-radius: 9999px; font-weight: 600; cursor: pointer; }
+.modalActions .submitBtn { width: auto; padding: 0.75rem 2rem; }
+
+/* Alerts */
+.alert { padding: 1rem 1.5rem; border-radius: 1rem; margin: 0 auto 2rem auto; font-size: 0.95rem; font-weight: 600; max-width: 1200px; }
+.alertError { background-color: #fef2f2; color: #ef4444; border: 1px solid #fca5a5; }
+.alertSuccess { background-color: #ecfdf5; color: #10b981; border: 1px solid #6ee7b7; }

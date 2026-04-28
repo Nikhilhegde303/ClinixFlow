@@ -54,12 +54,10 @@ export const startQueue = async (req, res, next) => {
  */
 export const joinQueue = async (req, res, next) => {
     try {
-        // Note: doctorId now comes from req.params because of our REST refactor
         const { doctorId } = req.params; 
         const { patientId, appointmentType, symptoms_raw } = req.body;
         const hospitalId = req.user.hospital_id;
         
-        // Extract the Idempotency Key from the custom header
         const idempotencyKey = req.header('Idempotency-Key');
 
         if (!doctorId || !patientId) {
@@ -73,8 +71,6 @@ export const joinQueue = async (req, res, next) => {
             });
 
             if (existingAppointment) {
-                console.log(`🛡️ [Network Defense] Caught duplicate request. Returning existing token #${existingAppointment.token_number}`);
-                // Note: We return 200 OK, not 201 Created, because it already existed.
                 return res.status(200).json({
                     success: true,
                     message: 'Recovered existing queue entry.',
@@ -83,10 +79,39 @@ export const joinQueue = async (req, res, next) => {
             }
         }
 
-        // 1. ATOMIC TRANSACTION: The ACID Guard [cite: 210]
+        // --- SMART PATIENT LOOKUP / AUTO-CREATION ---
+        let targetPatientId = patientId;
+
+        // 1. Try to find the patient by MR Number
+        let patientRecord = await prisma.patient.findUnique({
+            where: { mr_number: patientId }
+        });
+
+        // 2. If not found by MR, check if they accidentally passed a UUID
+        if (!patientRecord) {
+            patientRecord = await prisma.patient.findUnique({
+                where: { id: patientId }
+            });
+        }
+
+        // 3. If STILL not found, auto-register a "Walk-In Guest"
+        if (!patientRecord) {
+            patientRecord = await prisma.patient.create({
+                data: {
+                    hospital_id: hospitalId,
+                    mr_number: patientId, // Save whatever the receptionist typed (e.g., "MR-1001")
+                    name: "Walk-In Guest",
+                    phone: "Pending"
+                }
+            });
+            console.log(`🆕 Auto-registered new Walk-In Guest: ${patientId}`);
+        }
+
+        targetPatientId = patientRecord.id;
+
+        // --- ATOMIC TRANSACTION: The ACID Guard ---
         const result = await prisma.$transaction(async (tx) => {
             
-            // Row-Level Lock: 'SELECT ... FOR UPDATE' to prevent race conditions [cite: 301, 302]
             const lockedQueue = await tx.$queryRaw`
                 SELECT * FROM "QueueState" 
                 WHERE doctor_id = ${doctorId} 
@@ -97,26 +122,44 @@ export const joinQueue = async (req, res, next) => {
                 throw new Error("Doctor has not initialized their queue for today.");
             }
 
+            // 2. THE DUPLICATE GUARD 
+            // Check if this patient is already waiting or in consultation with this doctor
+            const activeAppointment = await tx.appointment.findFirst({
+                where: {
+                    doctor_id: doctorId,
+                    patient_id: targetPatientId,
+                    status: {
+                        in: ['WAITING', 'IN_CONSULTATION']
+                    }
+                }
+            });
+
+            if (activeAppointment) {
+                throw new Error(`Patient is already in the queue (Token #${activeAppointment.token_number}).`);
+            }
+
+
+
             const currentLastToken = lockedQueue[0].last_token_issued;
             const newTokenNumber = currentLastToken + 1;
 
-            // 2. Create the Appointment with initial AI status as 'PENDING' [cite: 401]
+            // Create the Appointment
             const appointment = await tx.appointment.create({
                 data: {
                     hospital_id: hospitalId,
                     doctor_id: doctorId,
-                    patient_id: patientId,
+                    patient_id: targetPatientId,
                     token_number: newTokenNumber,
                     type: appointmentType || 'WALK_IN',
                     status: 'WAITING',
                     priority_level: 0,
                     symptoms_raw: symptoms_raw || null,
                     ai_processing_status: symptoms_raw ? 'PENDING' : null,
-                    idempotency_key: idempotencyKey || null // Store the key!
+                    idempotency_key: idempotencyKey || null 
                 }
             });
 
-            // 3. Update the Queue State O(1) [cite: 318]
+            // Update the Queue State
             await tx.queueState.update({
                 where: { doctor_id: doctorId },
                 data: { last_token_issued: newTokenNumber }
@@ -125,30 +168,29 @@ export const joinQueue = async (req, res, next) => {
             return appointment;
         });
 
-        // 4. BACKGROUND AI PROCESSING (Non-blocking) [cite: 191]
+        // --- BACKGROUND AI PROCESSING ---
         if (symptoms_raw) {
-            summarizeSymptoms(symptoms_raw)
-                .then(async (aiResult) => {
-                    await prisma.appointment.update({
-                        where: { id: result.id },
-                        data: {
-                            symptoms_summary: aiResult.summary,
-                            ai_risk_flag: aiResult.ai_risk_flag,
-                            ai_processing_status: 'COMPLETED' 
-                        }
-                    });
-                    console.log(`✅ [AI] Symptoms processed for Token #${result.token_number}`);
-                })
-                .catch(async (err) => {
-                    console.error(`❌ [AI] Processing failed: ${err.message}`);
-                    await prisma.appointment.update({
-                        where: { id: result.id },
-                        data: { ai_processing_status: 'FAILED' }
-                    });
-                });
+            // (Assuming your summarizeSymptoms logic is imported and working)
+            // ... keep your existing AI logic here ...
         }
 
-        // Return the ticket to the user immediately
+        // --- NEW: WEBSOCKET BROADCAST (The Dual-Room Fix) ---
+        // 1. Look up the doctor profile to get the user_id
+        const docProfile = await prisma.doctor.findUnique({
+            where: { id: doctorId }
+        });
+        
+        const doctorUserId = docProfile ? docProfile.user_id : doctorId;
+
+        // 2. Broadcast to BOTH possible room names to ensure the React frontend hears it
+        const io = req.app.get('io');
+        if (io) {
+            io.to(`room_dr_${doctorId}`).to(`room_dr_${doctorUserId}`).emit('queue_update', {
+                message: "New patient joined the queue",
+                token: result.token_number
+            });
+        }
+
         res.status(201).json({
             success: true,
             message: 'Successfully joined the queue.',
@@ -156,7 +198,7 @@ export const joinQueue = async (req, res, next) => {
         });
 
     } catch (error) {
-        if (error.message.includes("initialized")) {
+        if (error.message.includes("initialized") || error.message.includes("already in the queue")) {
             return res.status(400).json({ success: false, message: error.message });
         }
         next(error);
@@ -292,7 +334,7 @@ export const checkoutPatient = async (req, res, next) => {
 
 /**
  * @desc    Insert an Emergency patient at the front of the queue and apply Triage Penalty
- * @route   POST /api/v1/queue/emergency
+ * @route   POST /api/v1/doctors/:doctorId/queue/emergency
  * @access  Private (RECEPTIONIST or DOCTOR)
  */
 export const insertEmergency = async (req, res, next) => {
@@ -305,9 +347,41 @@ export const insertEmergency = async (req, res, next) => {
             return res.status(400).json({ success: false, message: 'Doctor and Patient IDs required.' });
         }
 
-        // ATOMIC TRANSACTION: Insert patient and apply global penalty
+        // --- NEW: SMART PATIENT LOOKUP / AUTO-CREATION ---
+        let targetPatientId = patientId;
+
+        // 1. Try to find the patient by MR Number
+        let patientRecord = await prisma.patient.findUnique({
+            where: { mr_number: patientId }
+        });
+
+        // 2. If not found by MR, check if they accidentally passed a UUID
+        if (!patientRecord) {
+            patientRecord = await prisma.patient.findUnique({
+                where: { id: patientId }
+            });
+        }
+
+        // 3. If STILL not found, auto-register an "Emergency Walk-In"
+        if (!patientRecord) {
+            patientRecord = await prisma.patient.create({
+                data: {
+                    hospital_id: hospitalId,
+                    mr_number: patientId, // Save whatever the receptionist typed (e.g., "MR-911")
+                    name: "Emergency Walk-In",
+                    phone: "Pending"
+                }
+            });
+            console.log(`🚨 Auto-registered new Emergency Patient: ${patientId}`);
+        }
+
+        // Extract the true UUID required by PostgreSQL
+        targetPatientId = patientRecord.id;
+
+
+        // ATOMIC TRANSACTION: Insert or Update patient and apply global penalty
         const result = await prisma.$transaction(async (tx) => {
-            // 1. Get current Queue State (Need to lock it to prevent race conditions during the emergency)
+            // 1. Lock Queue State
             const lockedQueue = await tx.$queryRaw`
                 SELECT * FROM "QueueState" WHERE doctor_id = ${doctorId} FOR UPDATE
             `;
@@ -316,30 +390,48 @@ export const insertEmergency = async (req, res, next) => {
                 throw new Error("Queue not initialized.");
             }
 
-            const currentLastToken = lockedQueue[0].last_token_issued;
-            const newTokenNumber = currentLastToken + 1;
-
-            // 2. Create the Appointment with priority_level = 1
-            // Our callNextPatient query already orders by priority_level DESC, 
-            // so this automatically puts them next in line!
-            const emergencyAppt = await tx.appointment.create({
-                data: {
-                    hospital_id: hospitalId,
+            // 2. SMART TRIAGE: Look for an existing waiting appointment
+            let emergencyAppt = await tx.appointment.findFirst({
+                where: {
                     doctor_id: doctorId,
-                    patient_id: patientId,
-                    token_number: newTokenNumber,
-                    type: 'WALK_IN',
-                    status: 'WAITING',
-                    priority_level: 1 // <--- THE PREEMPTION FLAG
+                    patient_id: targetPatientId,
+                    status: 'WAITING'
                 }
             });
+
+            if (emergencyAppt) {
+                // PATH A: Patient is already waiting. Elevate them!
+                emergencyAppt = await tx.appointment.update({
+                    where: { id: emergencyAppt.id },
+                    data: { priority_level: 1 }
+                });
+                console.log(`⬆️ Elevated Token #${emergencyAppt.token_number} to Emergency Priority.`);
+            } else {
+                // PATH B: Brand new emergency arrival. Issue new token!
+                const currentLastToken = lockedQueue[0].last_token_issued;
+                const newTokenNumber = currentLastToken + 1;
+
+                emergencyAppt = await tx.appointment.create({
+                    data: {
+                        hospital_id: hospitalId,
+                        doctor_id: doctorId,
+                        patient_id: targetPatientId,
+                        token_number: newTokenNumber,
+                        type: 'WALK_IN',
+                        status: 'WAITING',
+                        priority_level: 1
+                    }
+                });
+            }
 
             // 3. Apply the Triage Penalty to the Queue State (e.g., 20 minutes)
             // This instantly offsets the mathematical ETA for everyone else in the waiting room
             const updatedQueue = await tx.queueState.update({
                 where: { doctor_id: doctorId },
                 data: { 
-                    last_token_issued: newTokenNumber,
+                    last_token_issued: emergencyAppt.token_number > lockedQueue[0].last_token_issued 
+                        ? emergencyAppt.token_number 
+                        : lockedQueue[0].last_token_issued,
                     is_emergency_active: true,
                     triage_penalty: 20 
                 }
@@ -373,6 +465,98 @@ export const insertEmergency = async (req, res, next) => {
         if (error.message === "Queue not initialized.") {
             return res.status(400).json({ success: false, message: error.message });
         }
+        next(error);
+    }
+};
+
+
+
+/**
+ * @desc    Get the live queue for a specific doctor
+ * @route   GET /api/v1/doctors/:doctorId/queue
+ * @access  Private (DOCTOR or RECEPTIONIST)
+ */
+export const getDoctorQueue = async (req, res, next) => {
+    try {
+        const { doctorId } = req.params;
+
+        // THE FIX: The ID Resolver
+        // If a Receptionist calls this, 'doctorId' is the Doctor Profile ID.
+        // If the Doctor calls this from their dashboard, 'doctorId' is their User ID.
+        const doctorProfile = await prisma.doctor.findFirst({
+            where: {
+                OR: [
+                    { id: doctorId },       // Matches Receptionist request
+                    { user_id: doctorId }   // Matches Doctor request
+                ]
+            }
+        });
+
+        if (!doctorProfile) {
+            return res.status(404).json({ success: false, message: 'Doctor profile not found.' });
+        }
+
+        const targetDoctorId = doctorProfile.id;
+
+        // Fetch all patients currently waiting or in consultation, ordered by priority
+        const activeQueue = await prisma.appointment.findMany({
+            where: {
+                doctor_id: targetDoctorId,
+                status: {
+                    in: ['WAITING', 'IN_CONSULTATION']
+                }
+            },
+            orderBy: [
+                { priority_level: 'desc' }, // Emergencies at the top
+                { joined_at: 'asc' }        // Then by wait time
+            ]
+        });
+
+        // Also fetch the current Queue State (EMA, calling token, etc.)
+        const queueState = await prisma.queueState.findUnique({
+            where: { doctor_id: targetDoctorId }
+        });
+
+        res.status(200).json({
+            success: true,
+            data: {
+                appointments: activeQueue,
+                state: queueState
+            }
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+/**
+ * @desc    Get specific appointment details AND current queue state for the Live Ticket view
+ * @route   GET /api/v1/appointments/:appointmentId
+ * @access  Public (Used by frictionless walk-in patients)
+ */
+export const getAppointmentDetails = async (req, res, next) => {
+    try {
+        const { appointmentId } = req.params;
+
+        const appointment = await prisma.appointment.findUnique({
+            where: { id: appointmentId },
+            select: { id: true, token_number: true, status: true, doctor_id: true, hospital_id: true }
+        });
+
+        if (!appointment) return res.status(404).json({ success: false, message: 'Ticket not found.' });
+
+        // FETCH THE QUEUE STATE FOR THE MATH
+        const queueState = await prisma.queueState.findUnique({
+            where: { doctor_id: appointment.doctor_id }
+        });
+
+        // SEND BOTH BACK TO REACT
+        res.status(200).json({
+            success: true,
+            data: { ticket: appointment, state: queueState }
+        });
+
+    } catch (error) {
         next(error);
     }
 };

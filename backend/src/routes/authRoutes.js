@@ -1,6 +1,7 @@
 import express from 'express';
 import { registerHospitalAdmin, login, createStaff } from '../controllers/authController.js';
 import { verifyToken, authorizeRoles } from '../middleware/authMiddleware.js';
+import { patientLogin, patientRegister } from '../controllers/patientAuthController.js';
 
 const router = express.Router();
 
@@ -16,5 +17,9 @@ router.post(
     authorizeRoles('ADMIN'), 
     createStaff
 );
+
+router.post('/patient/login', patientLogin);
+
+router.post('/patient/register', patientRegister);
 
 export default router;

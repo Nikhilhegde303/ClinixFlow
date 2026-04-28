@@ -1,0 +1,46 @@
+.triageContainer {
+    margin-top: 2.5rem;
+    padding-top: 2rem;
+    border-top: 2px dashed #cbd5e1;
+    position: relative;
+}
+
+.triageWarning {
+    color: #e11d48;
+    font-weight: 700;
+    margin-top: 0;
+    margin-bottom: 1.25rem;
+    font-size: 0.95rem;
+}
+
+.tooltipWrapper {
+    display: block;
+    cursor: not-allowed;
+}
+
+.criticalBtn {
+    width: 100%;
+    padding: 1rem;
+    background: linear-gradient(to right, #ef4444, #f43f5e);
+    color: white;
+    border: none;
+    border-radius: 9999px;
+    font-weight: 800;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 6px 20px rgba(225, 29, 72, 0.25);
+    letter-spacing: 0.05em;
+}
+
+.criticalBtn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(225, 29, 72, 0.4);
+}
+
+.criticalBtn:disabled {
+    background: #cbd5e1;
+    box-shadow: none;
+    cursor: not-allowed;
+    transform: none;
+}

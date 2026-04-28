@@ -10,3 +10,5 @@ yarn-error.log*
 # Workspace
 .vscode/
 .idea/
+
+node_modules/

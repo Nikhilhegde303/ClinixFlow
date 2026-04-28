@@ -1,0 +1,95 @@
+.historyContainer {
+    margin-top: 2rem;
+    padding-top: 2rem;
+    border-top: 1px dashed #cbd5e1;
+}
+
+.subTitle {
+    color: #475569;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin: 0 0 1.5rem 0;
+}
+
+.emptyText {
+    color: #94a3b8;
+    font-size: 0.95rem;
+    font-style: italic;
+}
+
+/* --- THE TIMELINE UI --- */
+.timeline {
+    border-left: 2px solid #e2e8f0;
+    margin-left: 0.5rem;
+    padding-left: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.historyCard {
+    position: relative;
+    background: #f8fafc;
+    padding: 1.25rem;
+    border-radius: 1rem;
+    border: 1px solid #e2e8f0;
+}
+
+/* The Timeline Nodes (Dots) */
+.historyCard::before {
+    content: '';
+    position: absolute;
+    left: -1.95rem; /* Aligns with the border-left of .timeline */
+    top: 1.5rem;
+    width: 0.75rem;
+    height: 0.75rem;
+    background: #cbd5e1;
+    border-radius: 50%;
+    border: 3px solid white;
+    box-shadow: 0 0 0 2px #f8fafc;
+}
+
+/* Highlight the most recent visit node */
+.historyCard:first-child::before {
+    background: #d946ef;
+    box-shadow: 0 0 0 3px rgba(217, 70, 239, 0.2);
+}
+
+.historyHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+}
+
+.historyHeader strong {
+    color: #0f172a;
+    font-size: 1rem;
+}
+
+.historyHeader small {
+    color: #64748b;
+    font-weight: 600;
+}
+
+.historyCard p {
+    margin: 0 0 0.75rem 0;
+    color: #334155;
+    font-size: 0.95rem;
+    line-height: 1.5;
+}
+
+.historyMeds {
+    display: inline-block;
+    background: white;
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.5rem;
+    font-size: 0.85rem;
+    color: #0f172a;
+    border: 1px solid #cbd5e1;
+}
+
+.historyMeds strong {
+    color: #10b981; /* Success green for prescriptions */
+}

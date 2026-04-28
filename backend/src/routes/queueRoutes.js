@@ -4,12 +4,19 @@ import {
     joinQueue, 
     callNextPatient, 
     checkoutPatient, 
-    insertEmergency 
+    insertEmergency,
+    getDoctorQueue
 } from '../controllers/queueController.js';
+
+import { getAppointmentDetails } from '../controllers/queueController.js';
+
 import { verifyToken, authorizeRoles } from '../middleware/authMiddleware.js';
 import { queueJoinLimiter } from '../middleware/rateLimiter.js'; // Imported rate limiter
 
 const router = express.Router();
+
+// PUBLIC ROUTE: No auth middleware here!
+router.get('/appointments/:appointmentId', getAppointmentDetails);
 
 /**
  * @route   POST /api/v1/doctors/:doctorId/queue/start
@@ -68,5 +75,18 @@ router.post(
     authorizeRoles('RECEPTIONIST', 'DOCTOR'),
     insertEmergency
 );
+
+
+/**
+ * @route   GET /api/v1/doctors/:doctorId/queue
+ * @desc    Fetch the active waiting room
+ */
+router.get(
+    '/doctors/:doctorId/queue',
+    verifyToken,
+    authorizeRoles('DOCTOR', 'RECEPTIONIST', 'PATIENT'), 
+    getDoctorQueue
+);
+
 
 export default router;

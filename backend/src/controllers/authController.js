@@ -9,11 +9,12 @@ import prisma from '../utils/db.js';
  */
 export const registerHospitalAdmin = async (req, res, next) => {
     try {
-        const { hospitalName, slug, email, password } = req.body;
+        // Added 'name' here
+        const { hospitalName, slug, email, password, name } = req.body;
 
-        // 1. Basic validation
-        if (!hospitalName || !slug || !email || !password) {
-            return res.status(400).json({ success: false, message: 'All fields are required.' });
+        // 1. Basic validation (now requires name)
+        if (!hospitalName || !slug || !email || !password || !name) {
+            return res.status(400).json({ success: false, message: 'All fields, including admin name, are required.' });
         }
 
         // 2. Check for existing slug or email
@@ -40,6 +41,7 @@ export const registerHospitalAdmin = async (req, res, next) => {
             const adminUser = await tx.user.create({
                 data: {
                     email: email,
+                    name: name, // Injected name into the database creation
                     password: hashedPassword,
                     role: 'ADMIN',
                     hospital_id: hospital.id,
@@ -94,11 +96,13 @@ export const login = async (req, res, next) => {
         }
 
         // 4. Generate JWT payload
-        // We include hospital_id so the frontend knows which tenant data to request
+        // included hospital_id so the frontend knows which tenant data to request
         const payload = {
             id: user.id,
             role: user.role,
-            hospital_id: user.hospital_id
+            hospital_id: user.hospital_id,
+            name: user.name,   
+            email: user.email  
         };
 
         const token = jwt.sign(payload, process.env.JWT_SECRET, {
@@ -126,14 +130,15 @@ export const login = async (req, res, next) => {
  */
 export const createStaff = async (req, res, next) => {
     try {
-        const { email, password, role, specialty, room_number } = req.body;
+        // Added 'name' here
+        const { email, password, role, specialty, room_number, name } = req.body;
         
         // Securely extract the hospital ID from the Admin's JWT token
         const hospitalId = req.user.hospital_id;
 
-        // 1. Validation
-        if (!email || !password || !role) {
-            return res.status(400).json({ success: false, message: 'Email, password, and role are required.' });
+        // 1. Validation (now requires name)
+        if (!email || !password || !role || !name) {
+            return res.status(400).json({ success: false, message: 'Name, email, password, and role are required.' });
         }
 
         if (!['DOCTOR', 'RECEPTIONIST'].includes(role)) {
@@ -155,6 +160,7 @@ export const createStaff = async (req, res, next) => {
             const newUser = await tx.user.create({
                 data: {
                     email,
+                    name, // Injected name into the database creation
                     password: hashedPassword,
                     role,
                     hospital_id: hospitalId,

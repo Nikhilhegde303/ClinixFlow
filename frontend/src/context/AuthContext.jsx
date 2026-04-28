@@ -26,6 +26,9 @@ export const AuthProvider = ({ children }) => {
         setLoading(false);
     }, []);
 
+    console.log("AuthContext User:", user);
+console.log("Auth Loading:", loading);
+
     const login = (token) => {
         localStorage.setItem('clinixflow_token', token);
         const decodedUser = jwtDecode(token);

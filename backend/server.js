@@ -10,7 +10,8 @@ const server = http.createServer(app);
 // 2. Initialize Socket.io Engine
 const io = new Server(server, {
     cors: {
-        origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
+        // Updated fallback to match your Vite frontend port
+        origin: process.env.CORS_ORIGIN || 'http://localhost:5173', 
         methods: ['GET', 'POST', 'PATCH'],
         credentials: true
     }
@@ -23,7 +24,13 @@ app.set('io', io);
 io.on('connection', (socket) => {
     console.log(`🔌 [Socket] New client connected: ${socket.id}`);
 
-    // We will add our Room joining logic here later
+    // --- NEW: Room Joining Logic ---
+    // The DoctorDashboard frontend emits this event when it mounts.
+    // We take the room name (e.g., 'room_dr_123') and subscribe this socket to it.
+    socket.on('join_clinic_room', (roomName) => {
+        socket.join(roomName);
+        console.log(`🏥 [Socket] Client ${socket.id} joined room: ${roomName}`);
+    });
 
     socket.on('disconnect', () => {
         console.log(`🔌 [Socket] Client disconnected: ${socket.id}`);
