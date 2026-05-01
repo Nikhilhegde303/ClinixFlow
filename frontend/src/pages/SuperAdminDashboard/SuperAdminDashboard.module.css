@@ -1,0 +1,117 @@
+/* Layout & Background */
+.dashboardLayout {
+  min-height: 100vh;
+  background-color: #faf5ff; /* Soft lavender */
+  padding: 2rem 5%;
+  font-family: system-ui, -apple-system, sans-serif;
+}
+
+/* Header Section */
+.header {
+  margin-bottom: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.headerTitles h1 {
+  color: #d946ef; /* Magenta brand color */
+  margin: 0 0 0.5rem 0;
+  font-size: 2.2rem;
+}
+
+.headerTitles p {
+  color: #64748b;
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+/* --- THE TOGGLE SWITCH STYLES --- */
+.viewToggle {
+  display: inline-flex;
+  background: #e2e8f0;
+  padding: 0.35rem;
+  border-radius: 9999px; /* Pill shape */
+  gap: 0.25rem;
+  width: fit-content;
+}
+
+.activeToggle {
+  background: white;
+  color: #d946ef;
+  border: none;
+  padding: 0.6rem 1.5rem;
+  border-radius: 9999px;
+  font-weight: 700;
+  font-size: 0.95rem;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.inactiveToggle {
+  background: transparent;
+  color: #64748b;
+  border: none;
+  padding: 0.6rem 1.5rem;
+  border-radius: 9999px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.inactiveToggle:hover {
+  color: #1e293b;
+  background: rgba(255, 255, 255, 0.4);
+}
+
+/* Main Content Wrapper */
+.mainContent {
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+/* White Card Section for both Leads and Tenants */
+.contentSection {
+  background: white;
+  padding: 2rem;
+  border-radius: 16px;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+  border: 1px solid #f1f5f9;
+}
+
+.contentSection h2 {
+  margin-top: 0;
+  color: #1e293b;
+  margin-bottom: 1.5rem;
+}
+
+/* Grid Layouts */
+.leadsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+  gap: 1.5rem;
+}
+
+/* Loading & Empty States */
+.messageBox {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 3rem;
+  color: #64748b;
+  font-style: italic;
+  background: #f8fafc;
+  border-radius: 12px;
+  border: 1px dashed #cbd5e1;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .leadsGrid {
+    grid-template-columns: 1fr;
+  }
+  .dashboardLayout {
+    padding: 1rem;
+  }
+}

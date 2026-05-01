@@ -39,11 +39,15 @@ const handleSubmit = async (e) => {
         if (userRole === 'RECEPTIONIST') {
           navigate('/receptionist');
         } else if (userRole === 'DOCTOR') {
-          navigate('/doctor'); // <-- CORRECTED PATH
-        } else if (userRole === 'ADMIN' || userRole === 'SUPER_ADMIN') {
-          navigate('/admin/dashboard'); // Ensure this matches App.jsx when you build it
+          navigate('/doctor'); 
+        } else if (userRole === 'ADMIN') {
+          // The hospital owner goes to their specific hospital dashboard
+          navigate('/admin/dashboard');
+        } else if (userRole === 'SUPER_ADMIN') {
+          // go to the super admin dashboard
+          navigate('/super-admin'); 
         } else {
-          navigate('/'); // Fallback for patients or unknown roles
+          navigate('/'); // Fallback
         }
       }
     } catch (err) {

@@ -1,0 +1,54 @@
+.tenantGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 1.5rem;
+}
+
+.tenantCard {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    border: 1px solid #e2e8f0;
+}
+
+.tenantCard h3 {
+    margin: 0 0 0.25rem 0;
+    color: #1e293b;
+}
+
+.slug {
+    color: #d946ef;
+    font-size: 0.85rem;
+    margin: 0 0 1rem 0;
+    font-family: monospace;
+}
+
+.details p {
+    margin: 0.25rem 0;
+    font-size: 0.9rem;
+    color: #475569;
+}
+
+.statusFooter {
+    margin-top: 1.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid #f1f5f9;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.activeBadge {
+    color: #10b981;
+    font-weight: 600;
+    font-size: 0.85rem;
+}
+
+.message {
+    text-align: center;
+    padding: 2rem;
+    color: #64748b;
+    background: white;
+    border-radius: 12px;
+}
